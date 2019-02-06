@@ -1,0 +1,10 @@
+
+
+OPTION psf_version = 2.1;
+
+BEGIN DRIVER axis_GYRO_streaming_data
+	OPTION supported_peripherals = (axis_GYRO_streaming_data);
+	OPTION copyfiles = all;
+	OPTION VERSION = 1.0;
+	OPTION NAME = axis_GYRO_streaming_data;
+END DRIVER
