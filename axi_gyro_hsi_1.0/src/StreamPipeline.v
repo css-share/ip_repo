@@ -169,7 +169,7 @@ clock_divider_by_2 CLK_DIV2(
    .reset_n(reset_n),
    .clear(clearDebugRegisters),
    .valid_token(valid_out),
-   .tclk(tclk_int),
+   .tclk(clock_int),
    .tvalid(tvalid_int),
    .tlast(tlast_int),
    .word0(dbg_word0_int),

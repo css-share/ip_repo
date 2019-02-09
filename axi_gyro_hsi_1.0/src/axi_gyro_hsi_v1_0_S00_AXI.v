@@ -1,20 +1,14 @@
 
 `timescale 1 ns / 1 ps
 
-//`include "gyro_basics.v"
-//`include "Tokenizer.v"
-//`include "Packetizer.v"
-//`include "StreamGenerator.v"
-//`include "StreamPipeline.v"
-
-
 	module axi_gyro_hsi_v1_0_S00_AXI #
 	(
 		// Users to add parameters here
 
 		// User parameters ends
 		// Do not modify the parameters beyond this line
-
+        parameter integer ADDR_WIDTH = 12,
+        parameter integer C_AXIS_TDATA_WIDTH = 32,
 		// Width of S_AXI data bus
 		parameter integer C_S_AXI_DATA_WIDTH	= 32,
 		// Width of S_AXI address bus
@@ -27,12 +21,14 @@
         output wire HSICKA1,
         input wire HSIA0,
         input wire HSIA1,
-        // -- User Debug ports (removed) Pedro Feb. 01,2019
-        // output wire DBG0,
-        // output wire DBG1,
-        // output wire DBG2,
-        // output wire DBG3,
-        // output wire DBG4,
+        // -- AXIS interface ports to be exported out
+        output wire tclock,
+        output wire [C_AXIS_TDATA_WIDTH-1:0] tdata,
+        output wire [(C_AXIS_TDATA_WIDTH/8)-1:0] tstrb,
+        output wire tvalid,
+        input  wire tready,
+        output wire tlast,
+
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -104,8 +100,11 @@
     wire MCK_int;
     
     wire [1:0] HSCK_int;
-    wire nc0, nc1;
-    wire [31:0] gyro_nc_data;
+    wire tclk_int;
+    wire tvalid_int;
+    wire tlast_int;
+    wire tready_int;
+    wire [31:0] tdata_int;
     
     wire DBG0_int;
     wire DBG1_int;
@@ -481,12 +480,12 @@
    .mode(slv_reg3[30:29]),
    .HSCK_POL(slv_reg3[31]),
    .MCK(MCK_int),
-   .TCLK(nc1),
+   .TCLK(tclk_int),
    .HSDATA({1'b0,1'b0}),    
    .HSCK(HSCK_int),
-   .TDATA(gyro_nc_data),
-   .TVALID(DBG3_int),
-   .TLAST(DBG4_int),
+   .TDATA(tdata_int),
+   .TVALID(tvalid_int),
+   .TLAST(tlast_int),
    .dbg_word0(dbg_word0_int),
    .dbg_word1(dbg_word1_int)
  );
@@ -499,7 +498,13 @@
      // assign DBG2  = DBG2_int;
      // assign DBG3  = DBG3_int;
      // assign DBG4  = DBG4_int;
-      
+     assign tclock = tclk_int;
+     assign tdata  = tdata_int;
+     assign tstrb  = 4'b0000;
+     assign tvalid = tvalid_int;
+    
+     assign tlast  = tlast_int;
+   
 	// User logic ends
 
 	endmodule
