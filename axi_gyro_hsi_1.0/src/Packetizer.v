@@ -126,8 +126,75 @@ valid <= 1'b0;
 endmodule
 
 // ----------------------------------------------------------------
-
 module Packetizer (
+  input clock,
+  input reset_n,
+  input [31:0] data_in,
+  input valid,
+  output TCLK,
+  output [31:0] TDATA,
+  output TVALID,
+  output TLAST
+);
+ 
+  wire [31:0]     s8;
+  wire [31:0]     s9;
+  wire [31:0]    s10;
+  wire [8:0] ctl_out;
+
+  wire last_delayed;
+  wire valid_delayed;
+ 
+  wire reset_sr;
+ 
+  wire inj_bit;
+  wire inj_bit_sync;
+  wire last;
+  wire full;
+  wire shift;
+  wire shift_sel;
+  wire shift_sel_sync;
+  wire valid_fsm;
+ 
+  Packetizer_fsm FSM (
+    .clock(clock),
+    .reset_n(reset_n),
+    .full(full),
+    .last(last),
+    .inj(inj_bit),
+    .shift_sel(shift_sel),
+    .valid(valid_fsm),
+    .rst_sr(reset_sr)
+  );
+ 
+  delay_line_8x32bits delayLine (.clock(shift),.reset_n(reset_n),.data_in(data_in),.data_out(s8));
+  register_32bits           Reg9(.clock(shift),.reset_n(reset_n),     .data_in(s8),.data_out(s9));
+  register_32bits          Reg10(.clock(~clock),.reset_n(reset_n),     .data_in(s9),.data_out(s10));
+  shift_reg_9bits            SR9(.clock(shift),.reset_n(reset_n & reset_sr),.en(1'b1),.d(inj_bit_sync),.out(ctl_out));
+ 
+  mux_2x1_1bit        shiftMux(.in0(valid),.in1(clock),.sel(shift_sel_sync),.mux_out(shift));
+ 
+  dff FF0(.clk(~clock), .rst_n(reset_n), .D(inj_bit), .Q(inj_bit_sync));
+  dff FF1(.clk(~clock), .rst_n(reset_n), .D(shift_sel & ~last), .Q(shift_sel_sync));
+  dff FF2(.clk(~clock), .rst_n(reset_n), .D(last), .Q(last_delayed));
+  dff FF3(.clk(~clock), .rst_n(reset_n), .D(valid_fsm), .Q(valid_delayed));
+ 
+  assign full   = ctl_out[7];
+  assign last   = (ctl_out[8] & ~ctl_out[7]);
+
+  assign TCLK   = clock;
+  //assign TDATA  = s9;
+  //assign TLAST  = last;
+  //assign TVALID = valid_fsm;
+
+  assign TDATA   = s10;
+  assign TLAST   = last_delayed;
+  assign TVALID  = valid_delayed;
+
+ endmodule
+
+
+module Packetizer_first (
   input clock,
   input reset_n,
   input [31:0] data_in,
@@ -153,6 +220,7 @@ module Packetizer (
   wire shift_sel;
   wire shift_sel_sync;
   wire valid_fsm;
+  wire shift;
 
   Packetizer_fsm FSM (
     .clock(clock),

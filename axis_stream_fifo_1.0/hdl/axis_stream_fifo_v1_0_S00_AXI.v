@@ -15,6 +15,8 @@
 	)
 	(
 		// Users to add ports here
+		input wire [31:0] dbg_word0,
+        input wire [31:0] dbg_word1,
         input wire [31:0] dbg_word2,
         input wire [31:0] dbg_word3,
 		// User ports ends
@@ -371,8 +373,10 @@
 	begin
 	      // Address decoding for reading registers
 	      case ( axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
-	        2'h0   : reg_data_out <= slv_reg0;
-	        2'h1   : reg_data_out <= slv_reg1;
+	        //2'h0   : reg_data_out <= slv_reg0;
+	        2'h0   : reg_data_out <= dbg_word0;
+	        //2'h1   : reg_data_out <= slv_reg1;
+	        2'h1   : reg_data_out <= dbg_word1;
 	        //2'h2   : reg_data_out <= slv_reg2;
 	        2'h2   : reg_data_out <= dbg_word2;
 	        //2'h3   : reg_data_out <= slv_reg3;

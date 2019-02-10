@@ -403,7 +403,7 @@ module StreamGenerator_fsm (
 endmodule
 
 // ----------------------------------------------------------------
-
+// new version with clock div by 2 inside.
 module StreamGenerator (
   input clock,
   input reset_n,
@@ -437,7 +437,7 @@ module StreamGenerator (
   wire        hold_int;
   wire        done_int;
   wire        HSDATA_int;
-  
+
    dff ff0(.clk(~clock),  .rst_n(reset_n), .D(start), .Q(start_int));
    dff ff1(.clk(~clock),  .rst_n(reset_n), .D(stop),  .Q(stop_int));
    dff ff2(.clk(~clock),  .rst_n(reset_n), .D(hold),  .Q(hold_int));
@@ -478,7 +478,8 @@ module StreamGenerator (
      .shift(HSCK_int),
      .reset_n(reset_n),
      .load(load_data),
-     .data_in({1'b0,16'h9381}),
+     //.data_in({1'b0,16'h9381}),
+     .data_in({1'b0,count_samples}),
      .d_out(HSDATA_int)
    );
  

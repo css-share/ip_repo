@@ -73,6 +73,8 @@
     output wire                   m00_axis_tlast  
 	);
 	
+	wire [31:0] dbg_word0_int;
+    wire [31:0] dbg_word1_int;
 	wire [31:0] dbg_word2_int;
 	wire [31:0] dbg_word3_int;
 	
@@ -102,13 +104,15 @@
 		.S_AXI_RRESP(s00_axi_rresp),
 		.S_AXI_RVALID(s00_axi_rvalid),
 		.S_AXI_RREADY(s00_axi_rready),
+		.dbg_word0(dbg_word0_int),
+		.dbg_word1(dbg_word1_int),
 		.dbg_word2(dbg_word2_int),
 		.dbg_word3(dbg_word3_int)
 	);
 
 reg [ADDR_WIDTH:0] wr_ptr_reg = {ADDR_WIDTH+1{1'b0}}, wr_ptr_next;  
 reg [ADDR_WIDTH:0] wr_ptr_gray_reg = {ADDR_WIDTH+1{1'b0}}, wr_ptr_gray_next; 
-reg [ADDR_WIDTH-1:0] wr_addr_reg = {ADDR_WIDTH{1'b0}};  // ####
+reg [ADDR_WIDTH:0] wr_addr_reg = {ADDR_WIDTH{1'b0}}; 
 reg [ADDR_WIDTH:0] rd_ptr_reg = {ADDR_WIDTH+1{1'b0}}, rd_ptr_next; 
 reg [ADDR_WIDTH:0] rd_ptr_gray_reg = {ADDR_WIDTH+1{1'b0}}, rd_ptr_gray_next;  
 reg [ADDR_WIDTH:0] rd_addr_reg = {ADDR_WIDTH+1{1'b0}}; 
@@ -208,7 +212,7 @@ always @(posedge tclk) begin // was s00_axis_aclk
         wr_ptr_gray_reg <= wr_ptr_gray_next; 
     end 
  
-    wr_addr_reg <= wr_ptr_next[ADDR_WIDTH-1:0]; // #### 
+    wr_addr_reg <= wr_ptr_next; 
  
     if (write) begin 
         mem[wr_addr_reg[ADDR_WIDTH-1:0]] <= mem_write_data; 
@@ -302,6 +306,8 @@ always @(posedge m00_axis_aclk) begin
     end  
 end  
 
+  assign dbg_word0_int = {m00_rst_sync1_reg,m00_rst_sync2_reg, m00_rst_sync3_reg,rd_ptr_reg,3'b000,rd_ptr_next};
+  assign dbg_word1_int = {3'b000,rd_addr_reg, 3'b000, rd_ptr_gray_next};
   assign dbg_word2_int = {s00_rst_sync1_reg,s00_rst_sync2_reg, s00_rst_sync3_reg,wr_ptr_reg,3'b000,wr_ptr_next};
   assign dbg_word3_int = {4'b0000,wr_addr_reg, 3'b000, wr_ptr_gray_next};
   

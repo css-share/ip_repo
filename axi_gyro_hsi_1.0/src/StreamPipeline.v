@@ -49,7 +49,7 @@ module StreamDebugger(
 
   upCounter16Bits CNTR0(.clock(valid_token),.reset_n(reset_n & ~clear),.enable(1'b1),.count(data0_int));
   upCounter16Bits CNTR1(.clock(tlast),.reset_n(reset_n & ~clear),.enable(1'b1),.count(data1_int));
-  upCounter16Bits CNTR2(.clock(tvalid & (~tclk)),.reset_n(reset_n & ~clear),.enable(1'b1),.count(data2_int));
+  upCounter16Bits CNTR2(.clock(tvalid & (tclk)),.reset_n(reset_n & ~clear),.enable(1'b1),.count(data2_int));
 
   assign word0 = { 16'h0000, data0_int};
   assign word1 = { data2_int, data1_int};
@@ -154,7 +154,7 @@ clock_divider_by_2 CLK_DIV2(
 );
 
  Packetizer GYRO_Packetizer(
-    .clock(clock_int),
+    .clock(clock), // was clock_int
     .reset_n(reset_n),
     .data_in(data_out),
     .valid(valid_out),
@@ -169,7 +169,7 @@ clock_divider_by_2 CLK_DIV2(
    .reset_n(reset_n),
    .clear(clearDebugRegisters),
    .valid_token(valid_out),
-   .tclk(clock_int),
+   .tclk(tclk_int),
    .tvalid(tvalid_int),
    .tlast(tlast_int),
    .word0(dbg_word0_int),
