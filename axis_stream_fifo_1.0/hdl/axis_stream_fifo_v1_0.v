@@ -7,7 +7,7 @@
 
 		// User parameters ends
 		// Do not modify the parameters beyond this line
-        parameter ADDR_WIDTH = 12,  
+        parameter ADDR_WIDTH = 10,  
          parameter C_AXIS_TDATA_WIDTH = 32,
 
 		// Parameters of Axi Slave Bus Interface S00_AXI
@@ -41,7 +41,7 @@
 		input wire  s00_axi_rready,
 
     /* 
-     * AXI slave interface (input to the FIFO) 
+     * AXI slave interface (input to the FIFO)
      */  
     input  wire                   s00_axis_aclk,  
     input  wire                   s00_axis_aresetn,  
@@ -53,14 +53,14 @@
       
     /* 
        CUSTOM INTERFACE FOR GYRO HSI
-    */
+    
     input  wire                   tclk,  
     input  wire                   tresetn,  
     input  wire [C_AXIS_TDATA_WIDTH-1:0]  tdata,  
     input  wire                   tvalid,  
     output wire                   tready,  
     input  wire                   tlast,  
-    
+    */
     /* 
      * AXI master interface (output of the FIFO) 
      */  
@@ -151,18 +151,20 @@ reg write;
 reg read; 
 reg store_output; 
  
-//assign s00_axis_tready = ~full & ~s00_rst_sync3_reg; // #### 
-assign tready = ~full & ~s00_rst_sync3_reg;
+assign s00_axis_tready = ~full & ~s00_rst_sync3_reg; // #### 
+//assign tready = ~full & ~s00_rst_sync3_reg;
  
 assign m00_axis_tvalid = m00_axis_tvalid_reg; 
  
-//assign mem_write_data = {s00_axis_tlast, s00_axis_tdata}; // ###
-assign mem_write_data = {tlast, tdata}; 
+assign mem_write_data = {s00_axis_tlast, s00_axis_tdata}; // ###
+//assign mem_write_data = {tlast, tdata}; 
 assign {m00_axis_tlast, m00_axis_tdata} = m00_data_reg; 
  
 // reset synchronization 
-always @(posedge tclk or negedge tresetn) begin    // was s00_axis_aclk and only posedge tclk
-    if (!tresetn) begin         // was s00_axis_aresetn
+//always @(posedge tclk or negedge tresetn) begin    
+// was s00_axis_aclk and only posedge tclk
+always @(posedge s00_axis_aclk) begin
+    if (!s00_axis_aresetn) begin
         s00_rst_sync1_reg <= 1'b1;  
         s00_rst_sync2_reg <= 1'b1; 
         s00_rst_sync3_reg <= 1'b1;  
@@ -192,7 +194,8 @@ always @* begin
     wr_ptr_next = wr_ptr_reg;  
     wr_ptr_gray_next = wr_ptr_gray_reg;  
   
-    if (tvalid) begin // was s00_axis_tvalid 
+   // if (tvalid) begin // was s00_axis_tvalid 
+     if(s00_axis_tvalid) begin
         // input data valid  
         if (~full) begin  
             // not full, perform write  
@@ -203,7 +206,7 @@ always @* begin
     end 
 end 
  
-always @(posedge tclk) begin // was s00_axis_aclk 
+always @(posedge s00_axis_aclk) begin // was tclk 
     if (s00_rst_sync3_reg) begin 
         wr_ptr_reg <= {ADDR_WIDTH+1{1'b0}};  
         wr_ptr_gray_reg <= {ADDR_WIDTH+1{1'b0}}; 
@@ -220,7 +223,7 @@ always @(posedge tclk) begin // was s00_axis_aclk
 end 
  
 // pointer synchronization 
-always @(posedge tclk) begin  // s00_axis_aclk
+always @(posedge s00_axis_aclk) begin  // tclk
     if (s00_rst_sync3_reg) begin 
         rd_ptr_gray_sync1_reg <= {ADDR_WIDTH+1{1'b0}};  
         rd_ptr_gray_sync2_reg <= {ADDR_WIDTH+1{1'b0}}; 
