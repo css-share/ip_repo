@@ -16,7 +16,6 @@
 
 	)
 	(
-
 		// Ports of Axi Slave Bus Interface S00_AXI
 		input wire  s00_axi_aclk,
 		input wire  s00_axi_aresetn,
@@ -52,16 +51,6 @@
     input  wire                   s00_axis_tlast,  
       
     /* 
-       CUSTOM INTERFACE FOR GYRO HSI
-    
-    input  wire                   tclk,  
-    input  wire                   tresetn,  
-    input  wire [C_AXIS_TDATA_WIDTH-1:0]  tdata,  
-    input  wire                   tvalid,  
-    output wire                   tready,  
-    input  wire                   tlast,  
-    */
-    /* 
      * AXI master interface (output of the FIFO) 
      */  
     input  wire                   m00_axis_aclk,  
@@ -77,6 +66,7 @@
     wire [31:0] dbg_word1_int;
 	wire [31:0] dbg_word2_int;
 	wire [31:0] dbg_word3_int;
+	wire        resetn_int;
 	
 // Instantiation of Axi Bus Interface S00_AXI
 	axis_stream_fifo_v1_0_S00_AXI # ( 
@@ -104,6 +94,7 @@
 		.S_AXI_RRESP(s00_axi_rresp),
 		.S_AXI_RVALID(s00_axi_rvalid),
 		.S_AXI_RREADY(s00_axi_rready),
+		.resetn(resetn_int),
 		.dbg_word0(dbg_word0_int),
 		.dbg_word1(dbg_word1_int),
 		.dbg_word2(dbg_word2_int),
@@ -164,7 +155,7 @@ assign {m00_axis_tlast, m00_axis_tdata} = m00_data_reg;
 //always @(posedge tclk or negedge tresetn) begin    
 // was s00_axis_aclk and only posedge tclk
 always @(posedge s00_axis_aclk) begin
-    if (!s00_axis_aresetn) begin
+    if (~s00_axis_aresetn | ~resetn_int) begin
         s00_rst_sync1_reg <= 1'b1;  
         s00_rst_sync2_reg <= 1'b1; 
         s00_rst_sync3_reg <= 1'b1;  
@@ -176,7 +167,7 @@ always @(posedge s00_axis_aclk) begin
 end 
  
 always @(posedge m00_axis_aclk) begin 
-    if (!m00_axis_aresetn) begin 
+    if (~m00_axis_aresetn | ~resetn_int) begin 
         m00_rst_sync1_reg <= 1'b1;  
         m00_rst_sync2_reg <= 1'b1; 
         m00_rst_sync3_reg <= 1'b1;  
