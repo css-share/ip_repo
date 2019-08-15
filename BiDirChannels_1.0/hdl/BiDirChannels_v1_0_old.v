@@ -537,54 +537,6 @@ wire size7;
 endmodule
 // ----------------------------------------------------------------
 
-
-
-
-
-module deinterleaver  (
-                 input clk,
-                 input rst_n,
-                 input ready_in,
-		 input valid_in,
-		 output wire tx0_valid_out,
-		 output wire tx1_valid_out,
-		 output wire tx2_valid_out,
-		 output wire tx3_valid_out
-                );
-
-
-
-
-   reg [1:0]		       mod_count;
-   
-   always @ (posedge clk or negedge rst_n)
-     begin
-	if (~rst_n)
-	  mod_count = 0;
-        else
-	  mod_count = mod_count + 1;
-     end
-
-
-
-   assign tx0_valid_out = (mod_count == 0 && ready_in && valid_in) ? valid_in : 0; 
-   assign tx1_valid_out = (mod_count == 1 && ready_in && valid_in) ? valid_in : 0;
-   assign tx2_valid_out = (mod_count == 2 && ready_in && valid_in) ? valid_in : 0;
-   assign tx3_valid_out = (mod_count == 3 && ready_in && valid_in) ? valid_in : 0;
-
-
- endmodule 
-   
-
-
-
-
-
-
-
-
-
-
 module GyroInputOutputSerializer (
   input  clock, 
   input  reset_n,
@@ -765,67 +717,6 @@ clock_divider_by_10 SYNC_CLK_DIV (
  );
 
  // ----------------------------------------------------------------
-
-
-   wire tx0_fifo_valid;
-   wire tx1_fifo_valid;   
-   wire tx2_fifo_valid;
-   wire tx3_fifo_valid;
-
-   wire hs_data_out_0_test;
-   wire hs_data_out_1_test;   
-   wire hs_data_out_2_test;   
-   wire hs_data_out_3_test; 
-
-  
- deinterleaver  u_deinterleaver (
-                                 .clk(clock),
-                                 .rst_n(reset_n),
-                                 .ready_in(tx_fifo_ready_int),
-		                 .valid_in(tx_fifo_valid),
-		                 .tx0_valid_out(tx0_fifo_valid),
-		                 .tx1_valid_out(tx1_fifo_valid),
-		                 .tx2_valid_out(tx2_fifo_valid),
-		                 .tx3_valid_out(tx3_fifo_valid)
-                   );
-
-
-
- outputShiftRegister32Bits OUT_SHIFT_REG_0test(
-    .shift(outSR_shift),
-    .reset_n(reset_n),
-    .load(tx_fifo_ready_int & tx0_fifo_valid),
-    .d_in(tx_fifo_data),
-    .d_out(hs_data_out_0_test)
-  );
-
-
- outputShiftRegister32Bits OUT_SHIFT_REG_1(
-    .shift(outSR_shift),
-    .reset_n(reset_n),
-    .load(tx_fifo_ready_int & tx1_fifo_valid),
-    .d_in(tx_fifo_data), 
-    .d_out(hs_data_out_1_test)
-  );
-
- outputShiftRegister32Bits OUT_SHIFT_REG_2(
-    .shift(outSR_shift),
-    .reset_n(reset_n),
-    .load(tx_fifo_ready_int & tx2_fifo_valid),
-    .d_in(tx_fifo_data), 
-    .d_out(hs_data_out_2_test)
-  );
-
- outputShiftRegister32Bits OUT_SHIFT_REG_3(
-    .shift(outSR_shift),
-    .reset_n(reset_n),
-    .load(tx_fifo_ready_int & tx3_fifo_valid),
-    .d_in(tx_fifo_data),
-    .d_out(hs_data_out_3_test)
-  );
-
-
-   
  demux_1_to_8 OUT_DEMUX(
    .demux_in(hs_data_out_int),
    .demux_sel(out_channel[2:0]),
@@ -838,30 +729,7 @@ clock_divider_by_10 SYNC_CLK_DIV (
    .demux_out_6(hs_data_out_6_int),
    .demux_out_7(hs_data_out_7_int)
  );
-
-
-
-
-
-outputShiftRegister32Bits OUT_SHIFT_REG_0(
-    .shift(outSR_shift),
-    .reset_n(reset_n),
-    .load(tx_fifo_ready_int & tx_fifo_valid),
-    .d_in(tx_fifo_data),
-    .d_out(hs_data_out_int)
-  );
-
-
-
-
-
-
-
-
-
-
-
-   
+ 
  //register_32bits TX_DELAY_REG(
  //   .clock(clock), 
 //    .reset_n(reset_n), 
@@ -876,7 +744,14 @@ outputShiftRegister32Bits OUT_SHIFT_REG_0(
     .d_out(rx_fifo_data_int)
   );
 
-
+ outputShiftRegister32Bits OUT_SHIFT_REG(
+    .shift(outSR_shift),
+    .reset_n(reset_n),
+    .load(tx_fifo_ready_int & tx_fifo_valid),
+    .d_in(tx_fifo_data),
+    //.d_in(tx_fifo_data_delayed),
+    .d_out(hs_data_out_int)
+  );
     
   mux_2x1_1bit          loopbackMux(
     .in0(HS_DATA_IN_int),
@@ -916,13 +791,13 @@ outputShiftRegister32Bits OUT_SHIFT_REG_0(
    .last_count(last_count_mux)
  );
    
-  assign HSCK       = ((masked_hsck_int ^ HSCK_POL)& enable & hsi_enable);
+  assign HSCK              = ((masked_hsck_int ^ HSCK_POL)& enable & hsi_enable);
   assign HSI_DAP    = (hs_data_out_0_int & enable & hsi_enable);
   assign HSI_DAM    = (hs_data_out_1_int & enable & hsi_enable);
   assign HSI_DBP    = (hs_data_out_2_int & enable & hsi_enable);
   assign HSI_DBM    = (hs_data_out_3_int & enable & hsi_enable);
   assign HSI_DC     = (hs_data_out_4_int & enable & hsi_enable);
-  assign MCK        = (clock_div_2 & enable);
+  assign MCK               = (clock_div_2 & enable);
 
   //assign rx_fifo_last_int = (last_count_int[0] & last_count_int[1] & last_count_int[2] & last_count_int[3] & last_count_int[4] & last_count_int[5] & last_count_int[6] & last_count_int[7]);
   assign rx_fifo_last_int = last_count_mux;
@@ -1093,12 +968,7 @@ endmodule
       .clock(s00_axi_aclk),
       .reset_n(s00_axi_aresetn & ~data_word_0[31]),
       .enable(data_word_2[0]),
-//      .hsi_enable(data_word_2[4]),
-
-
-   //  .enable(1'b1),
-      .hsi_enable(1'b1),
-				 
+      .hsi_enable(data_word_2[4]),
       .debug_clear(data_word_0[31]),
       .HSCK_POL(data_word_0[28]),
       .mode(data_word_0[25:24]),
@@ -1107,9 +977,7 @@ endmodule
       .in_channel(data_word_0[6:4]),
       .out_channel(data_word_0[2:0]),
       .in_start_stop(data_word_1[4]),
-    //  .out_start_stop(data_word_1[0]),
-   .out_start_stop(1'b1),
-				 
+      .out_start_stop(data_word_1[0]),
       .tx_fifo_data(s00_axis_tdata),
       .tx_fifo_ready(s00_axis_tready),
       .tx_fifo_valid(s00_axis_tvalid),
@@ -1132,7 +1000,6 @@ endmodule
       .data_word_1(debug_word_1)
     );
     
-
     OBUFDS #(
       .IOSTANDARD("DEFAULT")
     ) OBUFDS_inst (
@@ -1140,9 +1007,6 @@ endmodule
       .OB(MCK_N),
       .I(MCK)
     );
-
-
-
 
     assign m00_axis_tstrb = 4'b1111;
 	// User logic ends

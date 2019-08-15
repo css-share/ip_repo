@@ -414,6 +414,7 @@
       .clock(S_AXI_ACLK), 
       .clock_div(slv_reg3[2:0]),
       .reset_n(S_AXI_ARESETN),
+      .enable(slv_reg2[0]),
       .start(slv_reg0[31]),
       .done(SPI_done_int),
       .data_in(slv_reg0[23:0]),
@@ -732,6 +733,7 @@ module SPI_Master(
       input clock, 
       input [2:0] clock_div,
       input reset_n,
+      input enable, // active high.
       input start,
       output done,
       input [23:0] data_in,
@@ -752,6 +754,7 @@ module SPI_Master(
       wire shift;
       wire MOSI_int;
       wire SCK_int;
+      wire CS_int;
       wire done_int;
     
       wire clock_int;
@@ -790,15 +793,16 @@ module SPI_Master(
       .done(done_int),
       .count(count),
       .SCK(SCK_int),
-      .CS(CS),
+      .CS(CS_int),
       .load(load),
       .shift(shift)
     );
     
-     assign MOSI = MOSI_int & (~CS);
+     assign MOSI = ((MOSI_int & (~CS)) & enable);
      assign data_in_int = { 1'b0, data_in };
      assign data_out = data_out_int[23:0];
-     assign SCK = SCK_POL ^ SCK_int;
+     assign SCK = ((SCK_POL ^ SCK_int) & enable);
+     assign CS = (CS_int & enable);
      assign done = done_int;
     
 endmodule

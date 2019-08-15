@@ -1,84 +1,6 @@
-
+ This is the OLD file 
 `timescale 1 ns / 1 ps
-
-
-
-module sine_wave_gen(clk, rstn, en, data_out);
-//declare input and output
-    input clk;
-   input  rstn;
-   input  en;
-   
-   
-    output [7:0] data_out;
-//declare the sine ROM - 30 registers each 8 bit wide.  
-    wire [7:0] sine [0:29];
-//Internal signals  
-    integer i;  
-    reg [7:0] data_out; 
-
-   
-   assign        sine[0] = 0;
-    assign       sine[1] = 16;
-    assign       sine[2] = 31;
-    assign       sine[3] = 45;
-    assign       sine[4] = 58;
-     assign      sine[5] = 67;
-     assign      sine[6] = 74;
-     assign      sine[7] = 77;
-     assign      sine[8] = 77;
-     assign      sine[9] = 74;
-     assign      sine[10] = 67;
-     assign      sine[11] = 58;
-     assign      sine[12] = 45;
-      assign     sine[13] = 31;
-     assign      sine[14] = 16;
-     assign      sine[15] = 0;
-      assign     sine[16] = -16;
-     assign      sine[17] = -31;
-     assign      sine[18] = -45;
-      assign     sine[19] = -58;
-     assign      sine[20] = -67;
-      assign     sine[21] = -74;
-      assign     sine[22] = -77;
-      assign     sine[23] = -77;
-      assign     sine[24] = -74;
-      assign     sine[25] = -67;
-      assign     sine[26] = -58;
-      assign     sine[27] = -45;
-      assign     sine[28] = -31;
-      assign     sine[29] = -16;
- 
-
-
-    //At every positive edge of the clock, output a sine wave sample.
-    always@ (posedge clk or negedge rstn)
-      begin
-
-	 if (~rstn)
-	   begin
-	   data_out = 0;
-	   i = 0;
-	   end
-	 else if (i == 29)
-	   begin
-	   data_out = 0;
-	   i = 0;
-	   end
-	 else if (en)
-	   begin
-	   data_out = sine[i]; 
-           i = i+ 1;
-	   end
-	
-    end
-
-endmodule
-
-
-
-
-
+//
 	module axis_stream_fifo_v1_0 #
 	(
 		// Users to add parameters here
@@ -229,15 +151,8 @@ assign m00_axis_tvalid = m00_axis_tvalid_reg;
  
 assign mem_write_data = {s00_axis_tlast, s00_axis_tdata}; // ###
 //assign mem_write_data = {tlast, tdata}; 
-
-
-
-
 assign {m00_axis_tlast, m00_axis_tdata} = m00_data_reg; 
  
-
-
-
 // reset synchronization 
 //always @(posedge tclk or negedge tresetn) begin    
 // was s00_axis_aclk and only posedge tclk
@@ -337,6 +252,8 @@ always @* begin
             read = 1'b1; 
             mem_read_data_valid_next = 1'b1;  
             rd_ptr_next = rd_ptr_reg + 1;  
+            //rd_ptr_next = (rd_ptr_reg<ADDR_WIDTH)?rd_ptr_reg+1 : {ADDR_WIDTH+1{1'b0}};
+            //if (rd_ptr_next>=ADDR_WIDTH) rd_ptr_next=0;
             rd_ptr_gray_next = rd_ptr_next ^ (rd_ptr_next >> 1);  
         end 
           else
@@ -388,55 +305,10 @@ always @(posedge m00_axis_aclk) begin
         m00_axis_tvalid_reg <= m00_axis_tvalid_next;  
     end  
   
-   // if (store_output) begin  
-   //     m00_data_reg <= mem_read_data_reg;  
-   // end  
-end
-
-reg [11:0] fake_4096;
-   wire [7:0] fake_sin;
-   
-
-always @(posedge m00_axis_aclk or negedge m00_axis_aresetn) begin  
-  if (~m00_axis_aresetn)
-    begin
-        fake_4096 <= 0;
-    end
-  else if (m00_axis_tready)
-    begin
-         fake_4096 <= fake_4096 + 1;
-    end
-end
-
-
-  
- //assign   m00_data_reg = {20'h00000, fake_4096};
-   
- sine_wave_gen u_sinwave (
-                          .clk(m00_axis_aclk),
-			  .rstn(m00_axis_aresetn),
-			  .en(m00_axis_tready),
-                          .data_out(fake_sin)
-                          );
-
-
-	   
-
-always @(posedge m00_axis_aclk or negedge m00_axis_aresetn) begin    
-    if (~m00_axis_aresetn)
-        m00_data_reg <= 0;
-    else if (m00_axis_tready)
-         m00_data_reg <= mem_read_data_reg;
-      // m00_data_reg = {fake_4096, fake_4096};
-     //     m00_data_reg = {20'h00000, fake_sin, 4'b0000};
-    
- 
-end
-
-
-
-
-   
+    if (store_output) begin  
+        m00_data_reg <= mem_read_data_reg;  
+    end  
+end  
 
   assign dbg_word0_int = {m00_rst_sync1_reg,m00_rst_sync2_reg, m00_rst_sync3_reg,rd_ptr_reg,3'b000,rd_ptr_next};
   assign dbg_word1_int = {3'b000,rd_addr_reg, 3'b000, rd_ptr_gray_next};

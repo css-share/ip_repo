@@ -1,7 +1,7 @@
 
 `timescale 1 ns / 1 ps
 
-	module BiDirChannels_v1_0_S00_AXI #
+	module Handler_v1_0_S00_AXI #
 	(
 		// Users to add parameters here
 
@@ -15,11 +15,17 @@
 	)
 	(
 		// Users to add ports here
-        output wire [31:0] DATA_WORD_0, // write register for configuration and reset of debugger
-        output wire [31:0] DATA_WORD_1, // write register for control-flow
-        output wire [31:0] DATA_WORD_2, // debug data
-        input  wire [31:0] DATA_WORD_3, // debug data
-        
+        input wire STARTB,
+        input wire EOWB,
+        output wire EOT,
+        output wire SORT0,
+        output wire SORT1,
+        output wire SORT2,
+        output wire SORT3,
+        output wire SORT4,
+        output wire SORT5,
+        output wire SORT6,
+        output wire SORT7,
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -374,10 +380,10 @@
 	begin
 	      // Address decoding for reading registers
 	      case ( axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
-	        2'h0   : reg_data_out <= slv_reg0;
-	        2'h1   : reg_data_out <= slv_reg1;
+	        2'h0   : reg_data_out <= {31'b0, STARTB};
+	        2'h1   : reg_data_out <= {31'b0, EOWB};
 	        2'h2   : reg_data_out <= slv_reg2;
-	        2'h3   : reg_data_out <= DATA_WORD_3; // slv_reg3;
+	        2'h3   : reg_data_out <= slv_reg3;
 	        default : reg_data_out <= 0;
 	      endcase
 	end
@@ -402,9 +408,14 @@
 	end    
 
 	// Add user logic here
-	assign DATA_WORD_0 = slv_reg0;
-    assign DATA_WORD_1 = slv_reg1;
-    assign DATA_WORD_2 = slv_reg2;
+  assign EOT   = slv_reg2[0];
+  assign SORT0 = slv_reg3[0];
+  assign SORT1 = slv_reg3[4];
+  assign SORT2 = slv_reg3[8];
+  assign SORT3 = slv_reg3[12];
+  assign SORT4 = slv_reg3[16];
+  assign SORT5 = slv_reg3[20];
+  assign SORT6 = slv_reg3[24];
+  assign SORT7 = slv_reg3[28];
 	// User logic ends
-
 	endmodule

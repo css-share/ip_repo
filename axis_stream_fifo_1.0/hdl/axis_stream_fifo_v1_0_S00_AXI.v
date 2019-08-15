@@ -20,6 +20,7 @@
         input wire [31:0] dbg_word2,
         input wire [31:0] dbg_word3,
         output wire       resetn,       // active LOW
+        output wire       loop,         // active HIGH
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -407,6 +408,8 @@
 
 	// Add user logic here
 	assign resetn =  ~slv_reg0[0];     // inverted here to be active high in software.
+//	assign loop   = slv_reg1[0];
+	assign loop = 1'b0;
 	// User logic ends
 
 	endmodule
